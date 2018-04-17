@@ -10,7 +10,7 @@ class Program
 		Console.WriteLine("Enter an English sentence and watch it being tagged!");
 
 		// read the english lexicon data
-		var lexicon = File.ReadAllText("Grammar\\lexicon.txt");
+		var lexicon = File.ReadAllText(@"..\NFastTag\lexicon.txt");
 
 		// run the sample loop
 		var ft = new FastTag(lexicon);
