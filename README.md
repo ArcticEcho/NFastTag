@@ -1,5 +1,7 @@
 # NFastTag
 
+*This fork alters the CD tagging rule slightly and aims to further improve performance.* 
+
 NFastTag is a .NET port of Mark Watson's FastTag Part of Speech Tagger which was itself based on Eric Brill's trained rule set and English lexicon.
 
 Licensed under LGPL3 or Apache 2 licenses
