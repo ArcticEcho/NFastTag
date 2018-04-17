@@ -64,14 +64,14 @@ WRB Wh-adverb               how, where
 
 ## Usage
 ```csharp
-    // read the english lexicon data
-    var lexicon = File.ReadAllText("Grammar\\lexicon.txt");
-    // run the sample loop
-    var ft = new FastTag(lexicon);
-    var tagResult = ft.Tag(@"The truth is revealed in what we do, not in what we think.");
-    foreach (var ftr in tagResult)
-    {
-        var message = string.Format(@"[{0} {1}]", ftr.Word, ftr.PosTag);
-        Console.WriteLine(message);
-    }
+// read the english lexicon data
+var lexicon = File.ReadAllText("Grammar\\lexicon.txt");
+// run the sample loop
+var ft = new FastTag(lexicon);
+var tagResult = ft.Tag(@"The truth is revealed in what we do, not in what we think.");
+foreach (var ftr in tagResult)
+{
+    var message = string.Format(@"[{0} {1}]", ftr.Word, ftr.PosTag);
+    Console.WriteLine(message);
+}
 ```
