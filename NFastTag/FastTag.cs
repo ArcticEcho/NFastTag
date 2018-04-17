@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace NFastTag
@@ -14,12 +15,7 @@ namespace NFastTag
 		/// <summary>
 		/// Internal word lexicon where the word/pos tags are stored
 		/// </summary>
-		private readonly Dictionary<string, string[]> _lexicon = new Dictionary<string, string[]>();
-
-		private readonly Regex specCharsAtStartAndEnd = new Regex(
-				"^[^A-Za-z0-9]+|[^A-Za-z0-9]+$",
-				RegexOptions.Compiled | RegexOptions.CultureInvariant
-			);
+		private readonly Dictionary<string, string[]> lexicon = new Dictionary<string, string[]>();
 
 		/// <param name="learningData"></param>
 		public FastTag(string learningData)
@@ -38,18 +34,19 @@ namespace NFastTag
 		/// Checks if the provided word exist in the imported lexicon
 		/// </summary>
 		/// <param name="word"></param>
-		public bool WordInLexicon(string word)
-		{
-			return _lexicon.ContainsKey(word) || _lexicon.ContainsKey(word.ToLower());
-		}
+		public bool WordInLexicon(string word) =>
+			lexicon.ContainsKey(word) || lexicon.ContainsKey(word.ToLower());
 
 		/// <summary>
 		/// Assigns parts of speech to each word
 		/// </summary>
-		public IList<FastTagResult> Tag(IList<string> words)
+		public List<FastTagResult> Tag(IList<string> words)
 		{
-			if (words == null || words.Count == 0) return new List<FastTagResult>();
-			
+			if (words == null || words.Count == 0)
+			{
+				return new List<FastTagResult>();
+			}
+
 			var result = new List<FastTagResult>();
 			var pTags = GetPosTagsFor(words);
 
@@ -69,47 +66,46 @@ namespace NFastTag
 				}
 
 				// rule 2: convert a noun to a number (CD)
-				if (pTag.StartsWith("N"))
+				if (pTag.StartsWith("N", StringComparison.Ordinal))
 				{
 					if (float.TryParse(word, out var s))
 					{
 						pTag = "CD";
 					}
 				}
-
 				// rule 3: convert a noun to a past participle if words.get(i) ends with "ed"
-				if (pTag.StartsWith("N") && word.EndsWith("ed"))
+				else if (pTag.StartsWith("N", StringComparison.Ordinal) && word.EndsWith("ed", StringComparison.Ordinal))
 				{
 					pTag = "VBN";
 				}
 
 				// rule 4: convert any type to adverb if it ends in "ly";
-				if (word.EndsWith("ly"))
+				if (word.EndsWith("ly", StringComparison.Ordinal))
 				{
 					pTag = "RB";
 				}
-
-				// rule 5: convert a common noun (NN or NNS) to a adjective if it ends with "al"
-				if (pTag.StartsWith("NN") && word.EndsWith("al"))
+				else if (pTag.StartsWith("NN", StringComparison.Ordinal))
 				{
-					pTag = "JJ";
+					// rule 5: convert a common noun (NN or NNS) to a adjective if it ends with "al"
+					if (word.EndsWith("al", StringComparison.Ordinal))
+					{
+						pTag = "JJ";
+					}
+					// rule 6: convert a noun to a verb if the preceding word is "would"
+					else if (i > 0 && words[i - 1] == "would")
+					{
+						pTag = "VB";
+					}
 				}
-
-				// rule 6: convert a noun to a verb if the preceding word is "would"
-				if (i > 0 && pTag.StartsWith("NN") && words[i - 1] == "would")
-				{
-					pTag = "VB";
-				}
-
 				// rule 7: if a word has been categorized as a common noun and it ends with "s",
 				//         then set its type to plural common noun (NNS)
-				if (pTag == "NN" && word.EndsWith("s"))
+				else if (pTag == "NN" && word.EndsWith("s", StringComparison.Ordinal))
 				{
 					pTag = "NNS";
 				}
 
 				// rule 8: convert a common noun to a present participle verb (i.e., a gerund)
-				if (pTag.StartsWith("NN") && word.EndsWith("ing"))
+				if (pTag.StartsWith("NN", StringComparison.Ordinal) && word.EndsWith("ing", StringComparison.Ordinal))
 				{
 					pTag = "VBG";
 				}
@@ -125,17 +121,22 @@ namespace NFastTag
 		/// </summary>
 		public IList<FastTagResult> Tag(string sentence)
 		{
-			if (string.IsNullOrEmpty(sentence)) return new List<FastTagResult>();
+			if (string.IsNullOrEmpty(sentence))
+			{
+				return new List<FastTagResult>();
+			}
+
 			var sentenceWords = sentence.Split(' ');
+
 			return Tag(sentenceWords);
 		}
 
 		/// <summary>
 		/// Retrieve the pos tags from the lexicon for the provided word list
 		/// </summary>
-		private IList<string> GetPosTagsFor(IList<string> words)
+		private List<string> GetPosTagsFor(IList<string> words)
 		{
-			IList<string> ret = new List<string>(words.Count);
+			var ret = new List<string>(words.Count);
 
 			for (int i = 0, size = words.Count; i < size; i++)
 			{
@@ -148,12 +149,12 @@ namespace NFastTag
 					continue;
 				}
 
-				_lexicon.TryGetValue(word, out var ss);
+				lexicon.TryGetValue(word, out var ss);
 
 				// 1/22/2002 mod (from Lisp code): if not in hash, try lower case:
 				if (ss == null)
 				{
-					_lexicon.TryGetValue(word.ToLower(), out ss);
+					lexicon.TryGetValue(word.ToLower(), out ss);
 				}
 
 				if (ss == null && word.Length == 1)
@@ -176,13 +177,36 @@ namespace NFastTag
 		/// <summary>
 		/// Clears special chars from start and end of the word
 		/// </summary>
-		private string RemoveSpecialCharacters(string str)
+		public string RemoveSpecialCharacters(string str)
 		{
 			if (str.Length == 1) return str;
 
-			var rpl = specCharsAtStartAndEnd.Replace(str, "");
+			var start = -1;
+			var length = -1;
 
-			return rpl;
+			for (var i = 0; i < str.Length; i++)
+			{
+				if (char.IsLetterOrDigit(str[i]))
+				{
+					start = i;
+
+					break;
+				}
+			}
+
+			for (var i = str.Length - 1; i > 0; i--)
+			{
+				if (char.IsLetterOrDigit(str[i]))
+				{
+					length = 1 + i - start;
+
+					break;
+				}
+			}
+
+			length = length == -1 ? str.Length : length;
+
+			return str.Substring(start, length);
 		}
 
 		/// <summary>
@@ -194,7 +218,7 @@ namespace NFastTag
 
 			var word = ss[0];
 
-			_lexicon[word] = ss.Skip(1).ToArray();
+			lexicon[word] = ss.Skip(1).ToArray();
 		}
 	}
 }
