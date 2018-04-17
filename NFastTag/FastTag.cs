@@ -177,7 +177,7 @@ namespace NFastTag
 		/// <summary>
 		/// Clears special chars from start and end of the word
 		/// </summary>
-		public string RemoveSpecialCharacters(string str)
+		private string RemoveSpecialCharacters(string str)
 		{
 			if (str.Length == 1) return str;
 
