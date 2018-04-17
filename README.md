@@ -48,7 +48,7 @@ RP Particle                 up,off
 SYM Symbol                  +, %, &
 TO to                       to
 UH Interjection             oh, oops
-URL url                     http://www.google.com/
+URL url                     http://www.example.com/
 VB verb, base form          eat
 VBD verb, past tense        ate
 VBG verb, gerund            eating
