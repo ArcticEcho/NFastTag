@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 
 namespace NFastTag
 {
@@ -31,14 +29,14 @@ namespace NFastTag
 		}
 
 		/// <summary>
-		/// Checks if the provided word exist in the imported lexicon
+		/// Checks if the provided word exists in the imported lexicon
 		/// </summary>
 		/// <param name="word"></param>
 		public bool WordInLexicon(string word) =>
 			lexicon.ContainsKey(word) || lexicon.ContainsKey(word.ToLower());
 
 		/// <summary>
-		/// Assigns parts of speech to each word
+		/// Assigns parts of speech tags to each word
 		/// </summary>
 		public List<FastTagResult> Tag(IList<string> words)
 		{
@@ -65,49 +63,47 @@ namespace NFastTag
 					}
 				}
 
-				// rule 2: convert a noun to a number (CD)
 				if (pTag.StartsWith("N", StringComparison.Ordinal))
 				{
+					// rule 2: convert a noun to a number (CD)
 					if (float.TryParse(word, out var s))
 					{
 						pTag = "CD";
 					}
+					// rule 3: convert a noun to a past participle if words.get(i) ends with "ed"
+					else if (word.EndsWith("ed", StringComparison.Ordinal))
+					{
+						pTag = "VBN";
+					}
+					// rule 7: if a word has been categorized as a common noun and it ends with "s",
+					//         then set its type to plural common noun (NNS)
+					else if (pTag == "NN" && word.EndsWith("s", StringComparison.Ordinal))
+					{
+						pTag = "NNS";
+					}
+					else if (pTag.StartsWith("NN", StringComparison.Ordinal))
+					{
+						// rule 5: convert a common noun (NN or NNS) to an adjective if it ends with "al"
+						if (word.EndsWith("al", StringComparison.Ordinal))
+						{
+							pTag = "JJ";
+						}
+						// rule 6: convert a noun to a verb if the preceding word is "would"
+						else if (i > 0 && words[i - 1] == "would")
+						{
+							pTag = "VB";
+						}
+						// rule 8: convert a common noun to a present participle verb (i.e., a gerund)
+						else if (word.EndsWith("ing", StringComparison.Ordinal))
+						{
+							pTag = "VBG";
+						}
+					}
 				}
-				// rule 3: convert a noun to a past participle if words.get(i) ends with "ed"
-				else if (pTag.StartsWith("N", StringComparison.Ordinal) && word.EndsWith("ed", StringComparison.Ordinal))
-				{
-					pTag = "VBN";
-				}
-
-				// rule 4: convert any type to adverb if it ends in "ly";
-				if (word.EndsWith("ly", StringComparison.Ordinal))
+				// rule 4: convert any type to adverb if it ends in "ly"
+				else if (word.EndsWith("ly", StringComparison.Ordinal))
 				{
 					pTag = "RB";
-				}
-				else if (pTag.StartsWith("NN", StringComparison.Ordinal))
-				{
-					// rule 5: convert a common noun (NN or NNS) to a adjective if it ends with "al"
-					if (word.EndsWith("al", StringComparison.Ordinal))
-					{
-						pTag = "JJ";
-					}
-					// rule 6: convert a noun to a verb if the preceding word is "would"
-					else if (i > 0 && words[i - 1] == "would")
-					{
-						pTag = "VB";
-					}
-				}
-				// rule 7: if a word has been categorized as a common noun and it ends with "s",
-				//         then set its type to plural common noun (NNS)
-				else if (pTag == "NN" && word.EndsWith("s", StringComparison.Ordinal))
-				{
-					pTag = "NNS";
-				}
-
-				// rule 8: convert a common noun to a present participle verb (i.e., a gerund)
-				if (pTag.StartsWith("NN", StringComparison.Ordinal) && word.EndsWith("ing", StringComparison.Ordinal))
-				{
-					pTag = "VBG";
 				}
 
 				result.Add(new FastTagResult(word, pTag));
@@ -117,7 +113,7 @@ namespace NFastTag
 		}
 
 		/// <summary>
-		/// Assigns parts of speech to a sentence
+		/// Assigns parts of speech tags to a sentence
 		/// </summary>
 		public IList<FastTagResult> Tag(string sentence)
 		{
@@ -132,7 +128,7 @@ namespace NFastTag
 		}
 
 		/// <summary>
-		/// Retrieve the pos tags from the lexicon for the provided word list
+		/// Retrieve the PoS tags from the lexicon for the provided word list
 		/// </summary>
 		private List<string> GetPosTagsFor(IList<string> words)
 		{
