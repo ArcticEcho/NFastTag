@@ -38,7 +38,7 @@ namespace NFastTag
 		/// <summary>
 		/// Assigns parts of speech tags to each word
 		/// </summary>
-		public List<FastTagResult> Tag(IList<string> words)
+		public List<FastTagResult> Tag(IList<string> words, bool cleanWords = false)
 		{
 			if (words == null || words.Count == 0)
 			{
@@ -46,7 +46,7 @@ namespace NFastTag
 			}
 
 			var result = new List<FastTagResult>();
-			var pTags = GetPosTagsFor(words);
+			var pTags = GetPosTagsFor(words, cleanWords);
 
 			// Apply transformational rules
 			for (var i = 0; i < words.Count; i++)
@@ -127,19 +127,24 @@ namespace NFastTag
 
 			var sentenceWords = sentence.Split(' ');
 
-			return Tag(sentenceWords);
+			return Tag(sentenceWords, true);
 		}
 
 		/// <summary>
 		/// Retrieve the PoS tags from the lexicon for the provided word list
 		/// </summary>
-		private List<string> GetPosTagsFor(IList<string> words)
+		private List<string> GetPosTagsFor(IList<string> words, bool cleanWords = true)
 		{
 			var ret = new List<string>(words.Count);
 
 			for (int i = 0, size = words.Count; i < size; i++)
 			{
-				var word = RemoveSpecialCharacters(words[i]);
+				var word = words[i];
+
+				if (cleanWords)
+				{
+					word = RemoveSpecialCharacters(words[i]);
+				}
 
 				if (string.IsNullOrEmpty(word))
 				{
