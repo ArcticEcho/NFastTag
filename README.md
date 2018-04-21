@@ -21,7 +21,6 @@ TAG DEFINITIONS:
 ----------------
 
 <pre>
-	
 CC Coord Conjuncn           and,but,or
 CD Cardinal number          one,two
 DT Determiner               the,some
@@ -59,16 +58,15 @@ WDT Wh-determiner           which, that
 WP Wh pronoun               who, what
 WP$ Possessive-Wh           whose
 WRB Wh-adverb               how, where
-
 </pre>
 
 ## Usage
 ```csharp
 // read the english lexicon data
-var lexicon = File.ReadAllText("Grammar\\lexicon.txt");
+var lexicon = File.ReadAllText(@"path\to\lexicon.txt");
 // run the sample loop
 var ft = new FastTag(lexicon);
-var tagResult = ft.Tag(@"The truth is revealed in what we do, not in what we think.");
+var tagResult = ft.Tag("The truth is revealed in what we do, not in what we think.");
 foreach (var ftr in tagResult)
 {
     var message = string.Format(@"[{0} {1}]", ftr.Word, ftr.PosTag);
