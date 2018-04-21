@@ -75,9 +75,9 @@ namespace NFastTag
 					{
 						pTag = "VBN";
 					}
-					// rule 7: if a word has been categorized as a common noun and it ends with "s",
-					//         then set its type to plural common noun (NNS)
-					else if (pTag == "NN" && word.EndsWith("s", StringComparison.Ordinal))
+					// rule 7: if a word has been categorized as a common noun and it ends with
+					//         "s" (but not "ss"), then set its type to plural common noun (NNS)
+					else if (pTag == "NN" && word.EndsWith("s", StringComparison.Ordinal) && !word.EndsWith("ss", StringComparison.Ordinal))
 					{
 						pTag = "NNS";
 					}
@@ -175,7 +175,7 @@ namespace NFastTag
 		/// </summary>
 		private string RemoveSpecialCharacters(string str)
 		{
-			if (str.Length == 1) return str;
+			if (str.Length < 2) return str;
 
 			var start = -1;
 			var length = -1;
